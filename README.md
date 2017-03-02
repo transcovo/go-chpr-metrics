@@ -1,9 +1,10 @@
+# Go-chpr-metrics
+
 [![CircleCI](https://circleci.com/gh/transcovo/go-chpr-metrics.svg?style=shield)](https://circleci.com/gh/transcovo/go-chpr-metrics)
 [![codecov](https://codecov.io/gh/transcovo/go-chpr-metrics/branch/master/graph/badge.svg)](https://codecov.io/gh/transcovo/go-chpr-metrics)
 [![GoDoc](https://godoc.org/github.com/transcovo/go-chpr-metrics?status.svg)](https://godoc.org/github.com/transcovo/go-chpr-metrics)
 
-
------------------
+----------------- 
 
 This utility library implements our standard statsd configuration. 
 The base for this library is our [nodejs statsd client](https://github.com/transcovo/chpr-metrics) 

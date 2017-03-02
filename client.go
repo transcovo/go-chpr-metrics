@@ -108,7 +108,6 @@ func (sender *Sender) initStandardClient(clientBuilder *clientBuilder) {
 		Prefix: prefix,
 	}
 	sender.Clients = append(sender.Clients, clientBuilder.buildClient(basicConfig))
-
 }
 
 /*
@@ -119,21 +118,21 @@ func (sender *Sender) initDestinationClients(clientBuilder *clientBuilder) {
 
 	if metricsDestinationVar == "" {
 		logger.Info("[METRICS] METRICS_DESTINATIONS empty, not initializing a client for the advanced configuration")
-	} else {
-		destinations := &metricsDestinations{}
-		err := json.Unmarshal([]byte(metricsDestinationVar), destinations)
+		return
+	}
+	destinations := &metricsDestinations{}
+	err := json.Unmarshal([]byte(metricsDestinationVar), destinations)
 
-		if err != nil {
-			logger.WithFields(logrus.Fields(map[string]interface{}{
-				"metrics_destinations": metricsDestinationVar,
-				"error":                err,
-			})).Error("Error parsing env METRICS_DESTINATION")
-			panic("[METRICS] Error creating statsd client - JSON unmarshalling failed")
-		}
+	if err != nil {
+		logger.WithFields(logrus.Fields(map[string]interface{}{
+			"metrics_destinations": metricsDestinationVar,
+			"error":                err,
+		})).Error("Error parsing env METRICS_DESTINATION")
+		panic("[METRICS] Error creating statsd client - JSON unmarshalling failed")
+	}
 
-		for _, destination := range *destinations {
-			config := clientConfigFromDestination(destination)
-			sender.Clients = append(sender.Clients, clientBuilder.buildClient(config))
-		}
+	for _, destination := range *destinations {
+		config := clientConfigFromDestination(destination)
+		sender.Clients = append(sender.Clients, clientBuilder.buildClient(config))
 	}
 }

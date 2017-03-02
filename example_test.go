@@ -5,6 +5,9 @@ import (
 	"time"
 )
 
+/*
+This example presents a standard way to use the metrics lib
+*/
 func ExampleGetMetricsSender() {
 	metrics := GetMetricsSender()
 
