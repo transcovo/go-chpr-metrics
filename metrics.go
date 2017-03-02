@@ -8,8 +8,7 @@ import (
 
 var (
 	defaultClientBuilder *clientBuilder
-	sender               = &Sender{}
-	isSenderInitialized  = false
+	sender               *Sender
 )
 
 /*
@@ -20,6 +19,7 @@ func init() {
 	defaultClientBuilder = &clientBuilder{
 		errorLogger: defaultClientErrorHandler,
 	}
+	sender = GetMetricsSender()
 }
 
 /*
@@ -29,8 +29,7 @@ func (sender *Sender) initSender() {
 	sender.initStandardClient(defaultClientBuilder)
 	sender.initDestinationClients(defaultClientBuilder)
 	if len(sender.Clients) == 0 {
-		logger.Error("[METRICS] No metrics client initialized")
-		panic("[METRICS] No metrics client initialized")
+		logger.Warning("[METRICS] No metrics client initialized")
 	}
 }
 
@@ -38,25 +37,27 @@ func (sender *Sender) initSender() {
 GetMetricsSender returns a handler (Singleton) on the metrics sender
 */
 func GetMetricsSender() *Sender {
-	if !isSenderInitialized {
+	if sender == nil {
+		sender = &Sender{}
 		sender.initSender()
-		isSenderInitialized = true
 	}
 	return sender
 }
 
-/*
-Count sends a count metric
-*/
+// Count sends a count metric
+func Count(bucket string, n interface{}) { sender.Count(bucket, n) }
+
+// Count sends a count metric
 func (sender *Sender) Count(bucket string, n interface{}) {
 	for _, client := range sender.Clients {
 		client.Count(bucket, n)
 	}
 }
 
-/*
-Increment sends an increment metric (a Count with 1 as the quantifier)
-*/
+// Increment sends an increment metric (a Count with 1 as the quantifier)
+func Increment(bucket string) { sender.Increment(bucket) }
+
+// Increment sends an increment metric (a Count with 1 as the quantifier)
 func (sender *Sender) Increment(bucket string) {
 	for _, client := range sender.Clients {
 		client.Increment(bucket)
@@ -72,8 +73,13 @@ type Timing struct {
 }
 
 /*
+NewTiming generates a timing object.
+Call it where you need to start timing, then call send on the returned object.
+*/
+func NewTiming() *Timing { return sender.NewTiming() }
+
+/*
 NewTiming generates a timing object
-Call it where you need to start timing, then call send on the returned object
 */
 func (sender *Sender) NewTiming() *Timing {
 	return &Timing{

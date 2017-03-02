@@ -21,8 +21,7 @@ var localhost = "127.0.0.1"
 Util function to restore the metrics handler
 */
 func resetSender() {
-	sender = &Sender{}
-	isSenderInitialized = false
+	sender = nil
 }
 
 /*
@@ -139,7 +138,7 @@ func TestInitStandardClient_Failure(t *testing.T) {
 	}
 
 	tests.WithEnvVars(env, func() {
-		assert.Panics(t, func() { sender.initSender() })
+		assert.Panics(t, func() { GetMetricsSender() })
 		assert.Len(t, sender.Clients, 0)
 	})
 }
@@ -161,7 +160,7 @@ func TestInitStandardClient_Success(t *testing.T) {
 		"METRICS_PREFIX": "prefix1.",
 	}
 	tests.WithEnvVars(env, func() {
-		sender.initSender()
+		GetMetricsSender()
 		assert.Len(t, sender.Clients, 1)
 	})
 	notifyToClose(end)
@@ -179,7 +178,7 @@ func TestInitDestinationClients_FailureErrorJSON(t *testing.T) {
 
 	tests.WithEnvVars(env, func() {
 		assert.Panics(t, func() {
-			sender.initDestinationClients(defaultClientBuilder)
+			GetMetricsSender()
 		})
 		assert.Len(t, sender.Clients, 0)
 	})
@@ -201,7 +200,7 @@ func TestInitDestinationClients_SuccessOneDestination(t *testing.T) {
 	}
 
 	tests.WithEnvVars(env, func() {
-		sender.initDestinationClients(defaultClientBuilder)
+		GetMetricsSender()
 		assert.Len(t, sender.Clients, 1)
 	})
 	notifyToClose(end)
@@ -226,7 +225,7 @@ func TestInitDestinationClients_SuccessMultipleDestinations(t *testing.T) {
 	}
 
 	tests.WithEnvVars(env, func() {
-		sender.initDestinationClients(defaultClientBuilder)
+		GetMetricsSender()
 		assert.Len(t, sender.Clients, 2)
 	})
 	notifyToClose(end1)
@@ -236,14 +235,15 @@ func TestInitDestinationClients_SuccessMultipleDestinations(t *testing.T) {
 /*
 Tests that the program panic if there is no client initialized
 */
-func TestInitMSender_Panics(t *testing.T) {
+func TestInitSender_EmptyConfig(t *testing.T) {
 	resetSender()
 	env := map[string]string{
 		"METRICS_DESTINATIONS": "",
-		"METRICS_PORT":         "",
+		"METRICS_HOST":         "",
 	}
 	tests.WithEnvVars(env, func() {
-		assert.Panics(t, func() { sender.initSender() })
+		GetMetricsSender()
+		assert.Len(t, sender.Clients, 0)
 	})
 }
 
@@ -286,7 +286,7 @@ func TestIncrement_Success(t *testing.T) {
 	}
 	defer pc.Close()
 
-	assert.Equal(t, len(sender.Clients), 0)
+	assert.Nil(t, sender)
 
 	env := map[string]string{
 		"METRICS_HOST":   localhost,
@@ -294,9 +294,9 @@ func TestIncrement_Success(t *testing.T) {
 		"METRICS_PREFIX": "prefix1.",
 	}
 	tests.WithEnvVars(env, func() {
-		sender = GetMetricsSender()
+		GetMetricsSender()
 
-		sender.Increment("test.increment")
+		Increment("test.increment")
 		buffer := make([]byte, 1024)
 		var bytesReadCount int
 		for {
@@ -324,7 +324,7 @@ func TestCount_Success(t *testing.T) {
 	}
 	defer pc.Close()
 
-	assert.Equal(t, len(sender.Clients), 0)
+	assert.Nil(t, sender)
 
 	env := map[string]string{
 		"METRICS_HOST":   localhost,
@@ -332,9 +332,9 @@ func TestCount_Success(t *testing.T) {
 		"METRICS_PREFIX": "prefix1.",
 	}
 	tests.WithEnvVars(env, func() {
-		sender = GetMetricsSender()
+		GetMetricsSender()
 
-		sender.Count("test.count", 3)
+		Count("test.count", 3)
 
 		buffer := make([]byte, 1024)
 		var bytesReadCount int
@@ -364,7 +364,7 @@ func TestTiming_Success(t *testing.T) {
 	}
 	defer pc.Close()
 
-	assert.Equal(t, len(sender.Clients), 0)
+	assert.Nil(t, sender)
 
 	env := map[string]string{
 		"METRICS_HOST":   localhost,
@@ -372,12 +372,12 @@ func TestTiming_Success(t *testing.T) {
 		"METRICS_PREFIX": "prefix1.",
 	}
 	tests.WithEnvVars(env, func() {
-		sender = GetMetricsSender()
+		GetMetricsSender()
 
 		// stub now function
 		start := time.Date(2017, 2, 27, 0, 0, 0, 0, time.UTC)
 		now = func() time.Time { return start }
-		timing := sender.NewTiming()
+		timing := NewTiming()
 		func() {
 			// Simulate some other task
 		}()
