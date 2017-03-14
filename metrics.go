@@ -64,6 +64,16 @@ func (sender *Sender) Increment(bucket string) {
 	}
 }
 
+// Gauge sends a gauge metric
+func Gauge(bucket string, value interface{}) { sender.Gauge(bucket, value) }
+
+// Gauge sends a gauge metric
+func (sender *Sender) Gauge(bucket string, value interface{}) {
+	for _, client := range sender.Clients {
+		client.Gauge(bucket, value)
+	}
+}
+
 /*
 A Timing is an helper object that eases sending timing values.
 */

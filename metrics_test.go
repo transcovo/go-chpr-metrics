@@ -352,6 +352,46 @@ func TestCount_Success(t *testing.T) {
 /*
 Tests that a count sends a metric
 */
+func TestGauge_Success(t *testing.T) {
+	resetSender()
+
+	port := getUniquePort()
+
+	pc, err := net.ListenPacket("udp", localhost+":"+port)
+	if err != nil {
+		fmt.Println("Error creating the udp server", err)
+		panic(err)
+	}
+	defer pc.Close()
+
+	assert.Nil(t, sender)
+
+	env := map[string]string{
+		"METRICS_HOST":   localhost,
+		"METRICS_PORT":   port,
+		"METRICS_PREFIX": "prefix1.",
+	}
+	tests.WithEnvVars(env, func() {
+		GetMetricsSender()
+
+		Gauge("test.gauge", 123)
+
+		buffer := make([]byte, 1024)
+		var bytesReadCount int
+		for {
+			bytesReadCount, _, _ = pc.ReadFrom(buffer)
+			if bytesReadCount != 0 {
+				break
+			}
+		}
+
+		assert.Equal(t, "prefix1.test.gauge:123|g", string(buffer)[:bytesReadCount])
+	})
+}
+
+/*
+Tests that a count sends a metric
+*/
 func TestTiming_Success(t *testing.T) {
 	resetSender()
 

@@ -15,6 +15,9 @@ func Example() {
 	// Special case of count with value set to 1
 	metrics.Increment("my_counter")
 
+	// Gauge: records an absolute value
+	metrics.Gauge("my_gauge", 42)
+
 	// Timing: first instantiate a timer object, then call the send function of this object
 	timer := metrics.NewTiming()
 	//
@@ -41,6 +44,9 @@ func ExampleGetMetricsSender() {
 	// Increment: Increments a stat by a value (default is 1)
 	// Special case of count with value set to 1
 	metrics.Increment("my_counter")
+
+	// Gauge: records an absolute value
+	metrics.Gauge("my_gauge", 42)
 
 	// Timing: first instantiate a timer object, then call the send function of this object
 	timer := metrics.NewTiming()
