@@ -36,20 +36,20 @@ func Example() {
 This example presents a standard way to use the metrics lib
 */
 func ExampleGetMetricsSender() {
-	metrics := metrics.GetMetricsSender()
+	metricsSender := metrics.GetMetricsSender()
 
 	// Count: Increments a stat by a value (default is 1)
-	metrics.Count("my_counter", 3)
+	metricsSender.Count("my_counter", 3)
 
 	// Increment: Increments a stat by a value (default is 1)
 	// Special case of count with value set to 1
-	metrics.Increment("my_counter")
+	metricsSender.Increment("my_counter")
 
 	// Gauge: records an absolute value
-	metrics.Gauge("my_gauge", 42)
+	metricsSender.Gauge("my_gauge", 42)
 
 	// Timing: first instantiate a timer object, then call the send function of this object
-	timer := metrics.NewTiming()
+	timer := metricsSender.NewTiming()
 	//
 	func() {
 		fmt.Println("I am doing some task")
