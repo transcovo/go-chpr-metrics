@@ -139,8 +139,8 @@ func TestInitStandardClient_Failure(t *testing.T) {
 
 	tests.WithEnvVars(env, func() {
 		assert.Panics(t, func() { GetMetricsSender() })
-		assert.Len(t, sender.Clients, 0)
 	})
+	assert.Len(t, sender.Clients, 0)
 }
 
 /*
@@ -161,8 +161,8 @@ func TestInitStandardClient_Success(t *testing.T) {
 	}
 	tests.WithEnvVars(env, func() {
 		GetMetricsSender()
-		assert.Len(t, sender.Clients, 1)
 	})
+	assert.Len(t, sender.Clients, 1)
 	notifyToClose(end)
 }
 
@@ -180,8 +180,8 @@ func TestInitDestinationClients_FailureErrorJSON(t *testing.T) {
 		assert.Panics(t, func() {
 			GetMetricsSender()
 		})
-		assert.Len(t, sender.Clients, 0)
 	})
+	assert.Len(t, sender.Clients, 0)
 }
 
 /*
@@ -201,8 +201,8 @@ func TestInitDestinationClients_SuccessOneDestination(t *testing.T) {
 
 	tests.WithEnvVars(env, func() {
 		GetMetricsSender()
-		assert.Len(t, sender.Clients, 1)
 	})
+	assert.Len(t, sender.Clients, 1)
 	notifyToClose(end)
 }
 
@@ -226,8 +226,9 @@ func TestInitDestinationClients_SuccessMultipleDestinations(t *testing.T) {
 
 	tests.WithEnvVars(env, func() {
 		GetMetricsSender()
-		assert.Len(t, sender.Clients, 2)
 	})
+	assert.Len(t, sender.Clients, 2)
+
 	notifyToClose(end1)
 	notifyToClose(end2)
 }
@@ -243,8 +244,8 @@ func TestInitSender_EmptyConfig(t *testing.T) {
 	}
 	tests.WithEnvVars(env, func() {
 		GetMetricsSender()
-		assert.Len(t, sender.Clients, 0)
 	})
+	assert.Len(t, sender.Clients, 0)
 }
 
 /*
@@ -262,12 +263,16 @@ func TestGetMetricsSender_SingletonSuccess(t *testing.T) {
 		"METRICS_PORT":   port,
 		"METRICS_PREFIX": "prefix1.",
 	}
+	var metricsSender1 *Sender
+	var metricsSender2 *Sender
 	tests.WithEnvVars(env, func() {
-		metricsSender1 := GetMetricsSender()
-		metricsSender2 := GetMetricsSender()
-		assert.Equal(t, metricsSender1, metricsSender2)
-		assert.Equal(t, sender, metricsSender1)
+		metricsSender1 = GetMetricsSender()
+		metricsSender2 = GetMetricsSender()
 	})
+	assert.NotNil(t, metricsSender1)
+	assert.Equal(t, metricsSender1, metricsSender2)
+	assert.Equal(t, sender, metricsSender1)
+
 	notifyToClose(end)
 }
 
@@ -293,6 +298,8 @@ func TestIncrement_Success(t *testing.T) {
 		"METRICS_PORT":   port,
 		"METRICS_PREFIX": "prefix1.",
 	}
+
+	var payload string
 	tests.WithEnvVars(env, func() {
 		GetMetricsSender()
 
@@ -305,8 +312,9 @@ func TestIncrement_Success(t *testing.T) {
 				break
 			}
 		}
-		assert.Equal(t, "prefix1.test.increment:1|c", string(buffer)[:bytesReadCount])
+		payload = string(buffer)[:bytesReadCount]
 	})
+	assert.Equal(t, "prefix1.test.increment:1|c", payload)
 }
 
 /*
@@ -331,6 +339,7 @@ func TestCount_Success(t *testing.T) {
 		"METRICS_PORT":   port,
 		"METRICS_PREFIX": "prefix1.",
 	}
+	var payload string
 	tests.WithEnvVars(env, func() {
 		GetMetricsSender()
 
@@ -344,9 +353,50 @@ func TestCount_Success(t *testing.T) {
 				break
 			}
 		}
-
-		assert.Equal(t, "prefix1.test.count:3|c", string(buffer)[:bytesReadCount])
+		payload = string(buffer)[:bytesReadCount]
+		assert.Equal(t, "prefix1.test.count:3|c", payload)
 	})
+}
+
+/*
+Tests that a count sends a metric
+*/
+func TestGauge_Success(t *testing.T) {
+	resetSender()
+
+	port := getUniquePort()
+
+	pc, err := net.ListenPacket("udp", localhost+":"+port)
+	if err != nil {
+		fmt.Println("Error creating the udp server", err)
+		panic(err)
+	}
+	defer pc.Close()
+
+	assert.Nil(t, sender)
+
+	env := map[string]string{
+		"METRICS_HOST":   localhost,
+		"METRICS_PORT":   port,
+		"METRICS_PREFIX": "prefix1.",
+	}
+	var payload string
+	tests.WithEnvVars(env, func() {
+		GetMetricsSender()
+
+		Gauge("test.gauge", 123)
+
+		buffer := make([]byte, 1024)
+		var bytesReadCount int
+		for {
+			bytesReadCount, _, _ = pc.ReadFrom(buffer)
+			if bytesReadCount != 0 {
+				break
+			}
+		}
+		payload = string(buffer)[:bytesReadCount]
+	})
+	assert.Equal(t, "prefix1.test.gauge:123|g", payload)
 }
 
 /*
@@ -371,6 +421,7 @@ func TestTiming_Success(t *testing.T) {
 		"METRICS_PORT":   port,
 		"METRICS_PREFIX": "prefix1.",
 	}
+	var payload string
 	tests.WithEnvVars(env, func() {
 		GetMetricsSender()
 
@@ -393,7 +444,7 @@ func TestTiming_Success(t *testing.T) {
 				break
 			}
 		}
-
-		assert.Equal(t, "prefix1.test.timing:1000|ms", string(buffer)[:bytesReadCount])
+		payload = string(buffer)[:bytesReadCount]
 	})
+	assert.Equal(t, "prefix1.test.timing:1000|ms", payload)
 }
