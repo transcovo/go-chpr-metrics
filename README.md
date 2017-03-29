@@ -64,8 +64,6 @@ If you don't, when you try to require the handler with `GetMetricsSender()`, the
  
 ```golang 
 import "github.com/transcovo/go-chpr-metrics"
-
-var metrics = metrics.GetMetricsSender() 
  
 // Count: Increments a stat by a value (default is 1) 
 metrics.Count('my_counter', 3) 
