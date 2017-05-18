@@ -71,7 +71,10 @@ metrics.Count('my_counter', 3)
 // Increment: Increments a stat by a value (default is 1) 
 // Special case of count with value set to 1 
 metrics.Increment('my_counter') 
- 
+
+// Duration: send a timing based on a duration.
+metrics.Duration(endTime.Sub(startTime), "my_timing")
+
 // Timing: first instantiate a timer object, then call the send function of this object 
 timer := metrics.NewTiming() 
 someTask() 

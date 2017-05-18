@@ -366,6 +366,36 @@ func TestGauge_Success(t *testing.T) {
 }
 
 /*
+TestDuration_Success tests that Duration sends a timing metric
+*/
+func TestDuration_Success(t *testing.T) {
+	resetSender()
+
+	env, pc, tearDown := setupTestUDPServer()
+	defer tearDown()
+
+	assert.Nil(t, sender)
+
+	var payload string
+	tests.WithEnvVars(env, func() {
+		GetMetricsSender()
+
+		Duration(time.Microsecond*123456, "test.duration")
+
+		buffer := make([]byte, 1024)
+		var bytesReadCount int
+		for {
+			bytesReadCount, _, _ = pc.ReadFrom(buffer)
+			if bytesReadCount != 0 {
+				break
+			}
+		}
+		payload = string(buffer)[:bytesReadCount]
+	})
+	assert.Equal(t, "prefix1.test.duration:123|ms", payload)
+}
+
+/*
 Tests that a Timing sends a metric
 */
 func TestTiming_Success(t *testing.T) {
