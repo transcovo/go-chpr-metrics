@@ -282,22 +282,10 @@ Tests that an increment sends a metric
 func TestIncrement_Success(t *testing.T) {
 	resetSender()
 
-	port := getUniquePort()
-
-	pc, err := net.ListenPacket("udp", localhost+":"+port)
-	if err != nil {
-		fmt.Println("Error creating the udp server", err)
-		panic(err)
-	}
-	defer pc.Close()
+	env, pc, tearDown := setupTestUDPServer()
+	defer tearDown()
 
 	assert.Nil(t, sender)
-
-	env := map[string]string{
-		"METRICS_HOST":   localhost,
-		"METRICS_PORT":   port,
-		"METRICS_PREFIX": "prefix1.",
-	}
 
 	var payload string
 	tests.WithEnvVars(env, func() {
@@ -323,22 +311,11 @@ Tests that a count sends a metric
 func TestCount_Success(t *testing.T) {
 	resetSender()
 
-	port := getUniquePort()
-
-	pc, err := net.ListenPacket("udp", localhost+":"+port)
-	if err != nil {
-		fmt.Println("Error creating the udp server", err)
-		panic(err)
-	}
-	defer pc.Close()
+	env, pc, tearDown := setupTestUDPServer()
+	defer tearDown()
 
 	assert.Nil(t, sender)
 
-	env := map[string]string{
-		"METRICS_HOST":   localhost,
-		"METRICS_PORT":   port,
-		"METRICS_PREFIX": "prefix1.",
-	}
 	var payload string
 	tests.WithEnvVars(env, func() {
 		GetMetricsSender()
@@ -364,22 +341,11 @@ Tests that a count sends a metric
 func TestGauge_Success(t *testing.T) {
 	resetSender()
 
-	port := getUniquePort()
-
-	pc, err := net.ListenPacket("udp", localhost+":"+port)
-	if err != nil {
-		fmt.Println("Error creating the udp server", err)
-		panic(err)
-	}
-	defer pc.Close()
+	env, pc, tearDown := setupTestUDPServer()
+	defer tearDown()
 
 	assert.Nil(t, sender)
 
-	env := map[string]string{
-		"METRICS_HOST":   localhost,
-		"METRICS_PORT":   port,
-		"METRICS_PREFIX": "prefix1.",
-	}
 	var payload string
 	tests.WithEnvVars(env, func() {
 		GetMetricsSender()
@@ -400,27 +366,46 @@ func TestGauge_Success(t *testing.T) {
 }
 
 /*
-Tests that a count sends a metric
+TestDuration_Success tests that Duration sends a timing metric
+*/
+func TestDuration_Success(t *testing.T) {
+	resetSender()
+
+	env, pc, tearDown := setupTestUDPServer()
+	defer tearDown()
+
+	assert.Nil(t, sender)
+
+	var payload string
+	tests.WithEnvVars(env, func() {
+		GetMetricsSender()
+
+		Duration("test.duration", time.Microsecond*123456)
+
+		buffer := make([]byte, 1024)
+		var bytesReadCount int
+		for {
+			bytesReadCount, _, _ = pc.ReadFrom(buffer)
+			if bytesReadCount != 0 {
+				break
+			}
+		}
+		payload = string(buffer)[:bytesReadCount]
+	})
+	assert.Equal(t, "prefix1.test.duration:123|ms", payload)
+}
+
+/*
+Tests that a Timing sends a metric
 */
 func TestTiming_Success(t *testing.T) {
 	resetSender()
 
-	port := getUniquePort()
-
-	pc, err := net.ListenPacket("udp", localhost+":"+port)
-	if err != nil {
-		fmt.Println("Error creating the udp server", err)
-		panic(err)
-	}
-	defer pc.Close()
+	env, pc, tearDown := setupTestUDPServer()
+	defer tearDown()
 
 	assert.Nil(t, sender)
 
-	env := map[string]string{
-		"METRICS_HOST":   localhost,
-		"METRICS_PORT":   port,
-		"METRICS_PREFIX": "prefix1.",
-	}
 	var payload string
 	tests.WithEnvVars(env, func() {
 		GetMetricsSender()
@@ -447,4 +432,20 @@ func TestTiming_Success(t *testing.T) {
 		payload = string(buffer)[:bytesReadCount]
 	})
 	assert.Equal(t, "prefix1.test.timing:1000|ms", payload)
+}
+
+func setupTestUDPServer() (map[string]string, net.PacketConn, func() error) {
+	port := getUniquePort()
+
+	pc, err := net.ListenPacket("udp", localhost+":"+port)
+	if err != nil {
+		fmt.Println("Error creating the udp server", err)
+		panic(err)
+	}
+	env := map[string]string{
+		"METRICS_HOST":   localhost,
+		"METRICS_PORT":   port,
+		"METRICS_PREFIX": "prefix1.",
+	}
+	return env, pc, pc.Close
 }
