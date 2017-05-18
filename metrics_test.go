@@ -380,7 +380,7 @@ func TestDuration_Success(t *testing.T) {
 	tests.WithEnvVars(env, func() {
 		GetMetricsSender()
 
-		Duration(time.Microsecond*123456, "test.duration")
+		Duration("test.duration", time.Microsecond*123456)
 
 		buffer := make([]byte, 1024)
 		var bytesReadCount int

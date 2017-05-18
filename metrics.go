@@ -83,14 +83,14 @@ type Timing struct {
 }
 
 // Duration can emit a timing metric from a duration.
-func Duration(duration time.Duration, bucket string) { sender.Duration(duration, bucket) }
+func Duration(bucket string, duration time.Duration) { sender.Duration(bucket, duration) }
 
 /*
 Duration can emit a timing metric from a duration.
 Typical use: metrics.SendDuration(toTime.Sub(startTime))
 It is useful when the start time is not time.Now(), in which case NewTiming cannot apply.
 */
-func (sender *Sender) Duration(duration time.Duration, bucket string) {
+func (sender *Sender) Duration(bucket string, duration time.Duration) {
 	durationMs := int(duration / time.Millisecond)
 	for _, client := range sender.Clients {
 		client.Timing(bucket, durationMs)
@@ -117,7 +117,7 @@ func (sender *Sender) NewTiming() *Timing {
 Send the timing metric from a previously generated Timing object
 */
 func (timing *Timing) Send(bucket string) {
-	timing.sender.Duration(timing.Duration(), bucket)
+	timing.sender.Duration(bucket, timing.Duration())
 }
 
 /*

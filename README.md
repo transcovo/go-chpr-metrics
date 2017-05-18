@@ -73,7 +73,7 @@ metrics.Count('my_counter', 3)
 metrics.Increment('my_counter') 
 
 // Duration: send a timing based on a duration.
-metrics.Duration(endTime.Sub(startTime), "my_timing")
+metrics.Duration("my_timing", endTime.Sub(startTime))
 
 // Timing: first instantiate a timer object, then call the send function of this object 
 timer := metrics.NewTiming() 
