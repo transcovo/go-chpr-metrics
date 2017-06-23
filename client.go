@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"os"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/alexcesaro/statsd"
+	"github.com/sirupsen/logrus"
 	"github.com/transcovo/go-chpr-logger"
 )
 
