@@ -10,10 +10,7 @@ import (
 )
 
 func defaultClientErrorHandler(err error) {
-	// Do we choose to make the metrics depend on the logger ?
-	// That sounds like a bad idea to me but this would be useful to have logs about the connection to the statsd server
-	// fmt.Println("Error caught in metrics", error)
-	logger.WithField("error", err).Error("[METRICS] Error caught in metrics")
+	logger.WithField("error", err).Info("[METRICS] Error caught in metrics")
 }
 
 /*
