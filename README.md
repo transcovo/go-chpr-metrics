@@ -19,12 +19,12 @@ Minimum Go version: 1.7
  
 if using govendor 
 ```bash 
-govendor fetch -u github.com/transcovo/go-chrp-metrics 
+govendor fetch github.com/transcovo/go-chpr-metrics 
 ``` 
  
 standard way (not recommended) 
 ```bash 
-go get -u github.com/transcovo/go-chrp-metrics 
+go get -u github.com/transcovo/go-chpr-metrics 
 ``` 
  
 ## Configuration 
